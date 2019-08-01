@@ -1,24 +1,17 @@
 import requests, bs4, os, openpyxl, datetime
+def scrapeZillow(queryURL):
 
-def zillowAPI(api):
+    res = requests.get(queryURL)
 
-    # sample api call:
-    #   http://www.zillow.com/webservice/GetSearchResults.htm?zws-id=<ZWSID>&address=2114+Bigelow+Ave&citystatezip=Seattle%2C+WA
-    # documents: https://www.zillow.com/howto/api/GetSearchResults.htm
-    url = 'http://www.zillow.com/webservice/GetSearchResults.htm?zws-id=' + api
-    # zip paramenter
-    url += '&citystatezip=55372'
+    soup = bs4.BeautifulSoup(res.text, 'html.parser')
 
-    url+= '&rentzestimate=True'
-
-    res = requests.get(url)
-
-    print(res.text)
-    # it doesn't look like the API will allow a search. aYou must know the location itself
-
-    # probably will scrape instead: https://www.zillow.com/savage-mn/rentals/2-_beds/?searchQueryState={%22pagination%22:{},%22mapBounds%22:{%22west%22:-93.4254929523214,%22east%22:-93.3034760476786,%22south%22:44.74174617796238,%22north%22:44.76695555723581},%22usersSearchTerm%22:%22savage%20%22,%22regionSelection%22:[{%22regionId%22:50554,%22regionType%22:6}],%22isMapVisible%22:true,%22mapZoom%22:13,%22filterState%22:{%22price%22:{%22min%22:430854,%22max%22:592424},%22monthlyPayment%22:{%22min%22:1600,%22max%22:2200},%22beds%22:{%22min%22:2},%22sortSelection%22:{%22value%22:%22days%22},%22isForSaleByAgent%22:{%22value%22:false},%22isForSaleByOwner%22:{%22value%22:false},%22isNewConstruction%22:{%22value%22:false},%22isForSaleForeclosure%22:{%22value%22:false},%22isComingSoon%22:{%22value%22:false},%22isAuction%22:{%22value%22:false},%22isPreMarketForeclosure%22:{%22value%22:false},%22isPreMarketPreForeclosure%22:{%22value%22:false},%22isMakeMeMove%22:{%22value%22:false},%22isForRent%22:{%22value%22:true}},%22isListVisible%22:true}
-
+    print(soup)
     
+
+   # results = soup.find_all('a', class_='list-card-link list-card-img'.split())
+
+    #for article in results:
+     #   print(article)
 
 def scrapeCraigslist(queryURL):
 
@@ -27,6 +20,8 @@ def scrapeCraigslist(queryURL):
 
     # load URL into BS
     soup = bs4.BeautifulSoup(res.text, 'html.parser')
+
+    print('Gathering listings from %s' % (queryURL))
 
     scrappingResults = []
 
@@ -85,13 +80,27 @@ def scrapeCraigslist(queryURL):
           #   print(postingLink)
              print(spanList)
              break
-        resultsExcel(scrappingResults)
+
+    print("Gathered results")
+    resultsExcel(scrappingResults)
 
 def resultsExcel(results):
-    excelRow = 1
+    print('Writing results to excel sheet')
+
+    
+    excelRow = 2
     excelColumn = 1
     wb = openpyxl.Workbook()
     sheet = wb.active
+    sheet['A1'] = 'Post ID'
+    sheet['B1'] = 'Repost ID'
+    sheet['C1'] = 'Direct Link'
+    sheet['D1'] = 'Price'
+    sheet['E1'] = 'Location'
+    sheet['F1'] = 'Bedroom/Bath'
+    sheet['G1'] = 'SQ FT'
+    sheet['H1'] = 'Description'
+
     for posting in results:
         for data in posting:
             sheet[openpyxl.utils.get_column_letter(excelColumn) + str(excelRow)] = data
@@ -103,16 +112,18 @@ def resultsExcel(results):
         excelColumn = 1
     fileName =  ' Results ' + str(datetime.datetime.now().date()) + '.xlsx'
     wb.save(fileName)
+    print('Done!')
 
 cwd = os.getcwd()
 
 #query url
-f = open(cwd + "/url.txt", "r+") 
-url = f.read()
+f = open(cwd + "/craigslisturl.txt", "r+") 
+clurl = f.read()
 
-f2 = open(cwd +'/api.txt', 'r+')
-apiKey = f2.read()
+f2 = open(cwd +'/zillowurl.txt', 'r+')
+zurl = f2.read()
 
-#scrapeCraigslist(url)
+scrapeCraigslist(clurl)
 
-zillowAPI(apiKey)
+#scrapeZillow(zurl)
+
